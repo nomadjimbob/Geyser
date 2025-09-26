@@ -77,8 +77,19 @@ public class LoginEncryptionUtils {
             }
 
             IdentityData extraData = result.identityClaims().extraData;
+
+            // Stable XUID fallback when none is provided (offline/no MSA)
+            String xuid = extraData.xuid;
+            String displayName = extraData.displayName;
+
+            if (xuid == null || xuid.isEmpty()) {
+                displayName = "." + displayName; // Prefix name to avoid conflicts with online players
+                xuid = java.util.UUID.nameUUIDFromBytes((displayName).getBytes(java.nio.charset.StandardCharsets.UTF_8)).toString();
+            }
+
             // TODO!!! identity won't persist
-            session.setAuthData(new AuthData(extraData.displayName, extraData.identity, extraData.xuid));
+            session.setAuthData(new AuthData(displayName, extraData.identity, xuid));
+//            session.setAuthData(new AuthData(extraData.displayName, extraData.identity, extraData.xuid));
             if (authPayload instanceof CertificateChainPayload certificateChainPayload) {
                 session.setCertChainData(certificateChainPayload.getChain());
             } else {
